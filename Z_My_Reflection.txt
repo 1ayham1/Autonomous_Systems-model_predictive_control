@@ -1,0 +1,130 @@
+Ayham Zaza. 2017
+----------------
+
+Model Predictive Control (MPC) (Ref >> Class Notes and Videos)
+==============================================================
+
+
+
+Student describes their model in detail. This includes the state, actuators and update equations.
+
+Model Description: 
+------------------
+
+  * The idea is to represent path trajectory as an optimization problem. MPC simulates different acuator inputs, predict the results of a trajectory and selects the trajectory with minimum cost. Given a current state and a reference path we want to follow, the objective is to optimize the actuators at every step in time so that the total cost with the predicted trajectory is minimized. Now this so to speak "best trajectory so far" is taken as a current state and used to predict future trajectories; as if the input is calculated over future horizon.   
+
+  * In our case, the desired stated (reference), is the center of the lane. This could be captured by minimizing: cte and psi. The ideal value is that both of the errors is zero!
+
+  * To deal with a halt within a reference trajectory, a reference velocity was introduced. The cost function will penalize the vehicle of not maintaining that ref. velocity.
+
+  * Control input is also included in the cost function. This allows penalizing the magnitude of the input as well as the change rate. A smooth transition is acheived by introducing a term (delta) that captures the change between the next input control state and the current one.  
+
+  * The developed program includes the following:
+	
+	- Defining the duration of the Trajectory (described below)
+	- Defining actuator cosntraints. 
+	- Defining the cost functio (taking into account what has been mentioned)
+	- Pass the current state to MPC
+	- Call optimization solver and return a control input that minimizes the cost function
+	-
+
+
+********************************************
+--------------------------------------------
+Timestep Length and Elapsed Duration (N & dt)
+
+Student discusses the reasoning behind the chosen N (timestep length) and dt (elapsed duration between timesteps) values. Additionally the student details the previous values tried.
+
+Results & Discussion
+--------------------
+
+  * Let T describe the duration at witch future predictions are made. T can be refered to as "prediction horizon" and it is the product of N & dt.
+	- N	: is the number of time steps in the horizon
+	- dt	: is how much time elapses between actuations
+
+    A general tip indicates that: T should be as large as possible whiel dt is as small as possible. The length of the optimization input is controlled by N. Whiel increasing N will drive better optimization, it will also lead to mor computation that will hinder performance. Moreover, there is no point predicting the horizon over a certain point as the envrioment is changing dynamically. In my program, I made a trade off and took N to be 15.
+
+    Haveing a big dt will drive discritization error. Afterall, dt determines the time of every acuation point that will be ussed later to estimate the continous trajectory curve. In my program I considered dt to be 0.2
+
+    The main reasin behind the choosing the above N and dt values is simply because those worked for my problem in accordance with other variables. Those are hyperparameters that are tuned emperically. I also tried setting N as high as to 30, but this generated long mispredicted curves especially at the corners that lead my car to deviate from the lane. I also tried as low as 0.01 for dt, but the car kept fluctuating attempting to adjust every time to a new generated path. I then decreased N gradually and increased dt accordingly until I reached a good accuracy with the above values! :)
+
+
+
+********************************************
+--------------------------------------------
+
+Polynomial Fitting and MPC Preprocessing
+
+A polynomial is fitted to waypoints.
+
+If the student preprocesses waypoints, the vehicle state, and/or actuators prior to the MPC procedure it is described.
+
+
+Discussion:
+-----------
+No extra preprocessing wsa utlized. I just followed the nice presentation in the video tutorial that accompanied the project at udacity youtube channel.
+
+The x and y coordinates are contained in the ptsx and ptsy vectors. Since these are 2-element vectors a 1-degree polynomial (straight line) is sufficient.
+
+The cross track error is calculated by evaluating at polynomial at x (-1) and subtracting y.
+
+More details in the code. 
+
+
+
+
+********************************************
+--------------------------------------------
+
+Model Predictive Control with Latency
+
+The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
+
+
+Introduction
+------------
+
+  * In a real car, an actuation command won't execute instantly; there will be a delay as the command propagates through the system. A realistic delay might be on the order of 100 milliseconds. 
+
+Discussion 
+-----------
+  
+  * Unlike PID, MPC handles latency explicitly by incorporating it directly in the model. 
+
+  * The following is suggested in the lecture:
+
+	-  A contributing factor to latency is actuator dynamics. 
+	- This could easily be modeled by a simple dynamic system and incorporated into the vehicle model. 
+	- One approach would be running a simulation using the vehicle model starting from the current state for the duration of 		  the latency. The resulting state from the simulation is the new initial state for MPC.
+  
+  * In the code, it is set through an explicit sleep command @line224 of the main program
+	this_thread::sleep_for(chrono::milliseconds(100));
+
+***************************************************************************
+***************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------
